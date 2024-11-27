@@ -1,0 +1,280 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://code.jquery.com https://unpkg.com https://d3js.org https://threejs.org https://cdn.plot.ly https://stackpath.bootstrapcdn.com https://maps.googleapis.com https://cdn.tailwindcss.com https://ajax.googleapis.com https://kit.fontawesome.com https://cdn.datatables.net https://maxcdn.bootstrapcdn.com https://code.highcharts.com https://tako-static-assets-production.s3.amazonaws.com https://www.youtube.com https://fonts.googleapis.com https://fonts.gstatic.com https://pfst.cf2.poecdn.net https://puc.poecdn.net https://i.imgur.com https://wikimedia.org https://*.icons8.com https://*.giphy.com https://picsum.photos https://images.unsplash.com; frame-src 'self' https://www.youtube.com https://trytako.com; child-src 'self'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests; block-all-mixed-content;">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cute Annotation Tool</title>
+  <!-- Include Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&amp;family=Poppins:wght@400;600&amp;family=Roboto&amp;family=Indie+Flower&amp;display=swap" rel="stylesheet">
+  <style>
+    /* General Styling */
+    body {
+      font-family: 'Pacifico', cursive; /* Default cursive font */
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: url('https://www.toptal.com/designers/subtlepatterns/uploads/teddy-bears.png') repeat; /* Cute teddy bear pattern */
+      background-size: 200px;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #toolbar {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      margin-top: 20px;
+      z-index: 10;
+      animation: popIn 0.6s ease-out;
+    }
+
+    #toolbar button,
+    #toolbar select {
+      font-family: 'Poppins', sans-serif;
+      margin: 5px 10px;
+      padding: 10px 15px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(135deg, #f77062, #fe5196); /* Vibrant pink gradient */
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    #toolbar button:hover,
+    #toolbar select:hover {
+      transform: scale(1.1);
+      opacity: 0.9;
+    }
+
+    #toolbar select {
+      background: white;
+      color: #555;
+      border: 2px solid #f77062;
+      box-shadow: none;
+    }
+
+    #toolbar button.active {
+      background: linear-gradient(135deg, #ff9966, #ff5e62); /* Warm orange gradient */
+    }
+
+    #display {
+      margin-top: 20px;
+      width: 80%;
+      height: 60%;
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      font-size: 1.5rem; /* Default font size */
+      overflow-y: auto;
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    #display[contenteditable="true"] {
+      outline: none;
+      border: 3px solid #f77062;
+    }
+
+    canvas {
+      position: absolute;
+      top: calc(20px + 80px);
+      left: 10%;
+      width: 80%;
+      height: 60%;
+      border-radius: 20px;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Modern Button Colors */
+    #redPen {
+      background: linear-gradient(to right, #ff416c, #ff4b2b);
+    }
+
+    #bluePen {
+      background: linear-gradient(to right, #36d1dc, #5b86e5);
+    }
+
+    #greenPen {
+      background: linear-gradient(to right, #11998e, #38ef7d);
+    }
+
+    #eraserButton {
+      background: linear-gradient(to right, #bdc3c7, #2c3e50);
+    }
+
+    #clearButton {
+      background: linear-gradient(to right, #ff9a9e, #fad0c4);
+    }
+
+    /* Cute Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button id="editButton" onclick="toggleEdit()">Enable Editing</button>
+    <select id="fontSelector" onchange="changeFont()">
+      <option value="'Pacifico', cursive">Pacifico (Cursive)</option>
+      <option value="'Poppins', sans-serif">Poppins (Modern)</option>
+      <option value="'Roboto', sans-serif">Roboto (Clean)</option>
+      <option value="'Indie Flower', cursive">Indie Flower (Handwritten)</option>
+    </select>
+    <select id="fontSizeSelector" onchange="changeFontSize()">
+      <option value="1rem">Small</option>
+      <option value="1.5rem" selected="">Medium</option>
+      <option value="2rem">Large</option>
+      <option value="2.5rem">Extra Large</option>
+    </select>
+    <button id="clearButton" onclick="clearDisplay()">Clear Text</button>
+    <button id="redPen" onclick="setPen('red')">Red Pen</button>
+    <button id="bluePen" onclick="setPen('blue')">Blue Pen</button>
+    <button id="greenPen" onclick="setPen('green')">Green Pen</button>
+    <button id="eraserButton" onclick="setEraser()">Eraser</button>
+    <button id="clearCanvasButton" onclick="clearCanvas()">Clear Annotations</button>
+  </div>
+
+  <div id="display" contenteditable="false">
+    🐾 Let your creativity shine! Write, draw, or make notes in the cutest way possible! ✨
+  </div>
+
+  <canvas id="annotationCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('annotationCanvas');
+    const ctx = canvas.getContext('2d');
+    const display = document.getElementById('display');
+    let drawing = false; // Drawing mode
+    let erasing = false; // Eraser mode
+    let penColor = 'red'; // Default pen color
+    let fontSize = "1.5rem"; // Default font size
+    let fontFamily = "'Pacifico', cursive"; // Default font style
+    let isDrawing = false; // Tracks if user is actively drawing
+
+    // Resize canvas to match display container
+    function resizeCanvas() {
+      canvas.width = display.offsetWidth;
+      canvas.height = display.offsetHeight;
+    }
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Toggle Editing Mode
+    function toggleEdit() {
+      const isEditable = display.getAttribute('contenteditable') === 'true';
+      display.setAttribute('contenteditable', !isEditable);
+      const button = document.getElementById('editButton');
+      button.textContent = isEditable ? 'Enable Editing' : 'Disable Editing';
+      button.classList.toggle('active', !isEditable);
+    }
+
+    // Change Font Style
+    function changeFont() {
+      const fontSelector = document.getElementById('fontSelector');
+      fontFamily = fontSelector.value;
+      display.style.fontFamily = fontFamily;
+    }
+
+    // Change Font Size
+    function changeFontSize() {
+      const fontSizeSelector = document.getElementById('fontSizeSelector');
+      fontSize = fontSizeSelector.value;
+      display.style.fontSize = fontSize;
+    }
+
+    // Clear Display Text
+    function clearDisplay() {
+      display.innerHTML = ''; // Clear all content
+    }
+
+    // Clear All Annotations
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Set Pen Color
+    function setPen(color) {
+      penColor = color;
+      erasing = false;
+      canvas.style.pointerEvents = 'auto';
+    }
+
+    // Set Eraser Mode
+    function setEraser() {
+      erasing = true;
+      canvas.style.pointerEvents = 'auto';
+    }
+
+    // Handle Drawing
+    canvas.addEventListener('mousedown', (e) => {
+      isDrawing = true;
+      const { x, y } = getMousePos(e);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return;
+      const { x, y } = getMousePos(e);
+      if (erasing) {
+        ctx.clearRect(x - 10, y - 10, 20, 20);
+      } else {
+        ctx.lineTo(x, y);
+        ctx.strokeStyle = penColor;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      isDrawing = false;
+    });
+
+    canvas.addEventListener('mouseout', () => {
+      isDrawing = false;
+    });
+
+    // Get Mouse Position
+    function getMousePos(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * (canvas.width / rect.width),
+        y: (event.clientY - rect.top) * (canvas.height / rect.height),
+      };
+    }
+  </script>
+
+
+</body></html>
